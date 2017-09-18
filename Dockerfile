@@ -3,12 +3,12 @@ FROM mesosphere/kafka-client
 # Install pandas
 RUN \
     apt-get update && \
-    apt-get install -y python-pip python-pandas && \
+    apt-get install -y python-avro python-pandas python-snappy && \
     rm -rf /var/lib/apt/lists/*
 
-# Install Faker, Click, Fastavro
+# Install Faker, Click, fastavro
 # FIXME: Use of pip and requirements.txt was abandandoned due to a weird crypto error.
-RUN easy_install Faker click fastavro
+RUN easy_install Faker click fastavro python-kafka
 
 # Set the working directory to /app
 WORKDIR /app
@@ -19,7 +19,8 @@ ADD . /app
 # Define environment variable
 ENV KAFKA_BROKER_LIST 127.0.0.1:1025
 ENV KAFKA_TOPIC_NAME topic1
+ENV INCIDENT_COUNT 1
 
 # Run app.py when the container launches
-CMD ["python", "incidents.py", "|", "/bin/kafka-console-producer.sh", "--broker-list $KAFKA_BROKER_LIST", "--topic $KAFKA_TOPIC_NAME"]
+CMD ["python", "incidents.py", "--count", "$INCIDENT_COUNT"]
 

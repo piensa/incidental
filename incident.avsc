@@ -1,0 +1,117 @@
+{
+ "type": "record",
+ "name": "Incident",
+ "namespace": "stat",
+ "fields": [
+
+      {
+        "name": "address_line1",
+        "type": "string"
+      },
+      {
+        "name": "address_latitude",
+        "type": "float"
+      },
+      {
+        "name": "address_longitude",
+        "type": "float"
+      },
+      {
+        "name": "address_postal_code",
+        "type": "string"
+      },
+      {
+        "name": "address_state",
+        "type": "string"
+      },
+      {
+        "name": "apparatus_car_id",
+        "type": "string"
+      },
+      {
+        "name": "apparatus_shift",
+        "type": "string"
+      },
+      {
+        "name": "apparatus_unit_type",
+        "type": "string"
+      },
+      {
+        "name": "apparatus_dispatched",
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      {
+        "name": "apparatus_enroute",
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      {
+        "name": "apparatus_arrived",
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      {
+        "name": "apparatus_available",
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      {
+        "name": "description_comments",
+        "type": "string"
+      },
+      {
+        "name": "description_event_closed",
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      {
+        "name": "description_event_opened",
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      {
+        "name": "description_first_unit_arrived",
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      {
+        "name": "description_first_unit_dispatched",
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      {
+        "name": "description_first_unit_enroute",
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      {
+        "name": "description_subtype",
+        "type": "string"
+      },
+      {
+        "name": "description_type",
+        "type": "string"
+      },
+      {
+        "name": "fire_dpt_lat",
+        "type": "float"
+      },
+      {
+        "name": "fire_dpt_lon",
+        "type": "float"
+      },
+      {
+        "name": "fire_dpt_name",
+        "type": "string"
+      },
+      {
+        "name": "fire_dpt_shift",
+        "type": "string"
+      },
+      {
+        "name": "fire_dpt_state",
+        "type": "string"
+      }
+ ]
+}

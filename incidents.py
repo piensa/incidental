@@ -1,13 +1,10 @@
-
 import click
-import fastavro as avro
 import random
 import pandas as pd
 import faker
 import datetime
 import pprint
 import json
-
 
 # Column definition from GeoNames US txt dump.
 dtypes_dict = {
@@ -106,188 +103,34 @@ INCIDENT_TYPES = {
     ),
 }
 
-AVRO_SCHEMA="""
-[
-  {
-    "fields": [
-      {
-        "name": "address_line",
-        "type": "string"
-      },
-      {
-        "name": "latitude",
-        "type": "float"
-      },
-      {
-        "name": "longitude",
-        "type": "float"
-      },
-      {
-        "name": "postal_code",
-        "type": "string"
-      },
-      {
-        "name": "state",
-        "type": "string"
-      }
-    ],
-    "name": "address",
-    "type": "record"
-  },
-  {
-    "fields": [
-      {
-        "name": "arrived",
-        "type": "timestamp-millis"
-      },
-      {
-        "name": "available",
-        "type": "timestamp-millis"
-      },
-      {
-        "name": "dispatched",
-        "type": "timestamp-millis"
-      },
-      {
-        "name": "enroute",
-        "type": "timestamp-millis"
-      }
-    ],
-    "name": "unit_status",
-    "type": "record"
-  },
-  {
-    "fields": [
-      {
-        "name": "card_id",
-        "type": "string"
-      },
-      {
-        "name": "shift",
-        "type": "string"
-      },
-      {
-        "name": "unit_type",
-        "type": "string"
-      },
-      {
-        "name": "unit_status",
-        "type": "unit_status"
-      }
-    ],
-    "name": "apparatus",
-    "type": "record"
-  },
-  {
-    "fields": [
-      {
-        "name": "comments",
-        "type": "string"
-      },
-      {
-        "name": "event_closed",
-        "type": "timestamp-millis"
-      },
-      {
-        "name": "event_opened",
-        "type": "timestamp-millis"
-      },
-      {
-        "name": "first_unit_arrived",
-        "type": "timestamp-millis"
-      },
-      {
-        "name": "first_unit_dispatched",
-        "type": "timestamp-millis"
-      },
-      {
-        "name": "first_unit_enroute",
-        "type": "timestamp-millis"
-      },
-      {
-        "name": "subtype",
-        "type": "string"
-      },
-      {
-        "name": "type",
-        "type": "string"
-      }
-    ],
-    "name": "description",
-    "type": "record"
-  },
-  {
-    "fields": [
-      {
-        "name": "lat",
-        "type": "float"
-      },
-      {
-        "name": "lon",
-        "type": "float"
-      },
-      {
-        "name": "name",
-        "type": "string"
-      },
-      {
-        "name": "shift",
-        "type": "string"
-      },
-      {
-        "name": "state",
-        "type": "string"
-      }
-    ],
-    "name": "fire_department",
-    "type": "record"
-  },
-  {
-    "fields": [
-      {
-        "name": "address",
-        "type": "address"
-      },
-      {
-        "name": "apparatus",
-        "type": "apparatus"
-      },
-      {
-        "name": "description",
-        "type": "description"
-      },
-      {
-        "name": "fire_department",
-        "type": "fire_department"
-      }
-    ],
-    "name": "incident",
-    "type": "record"
-  }
-]
-"""
+
 
 @click.command()
 @click.option('--count', default=1, help='Number of incidents.')
-@click.option('--avro', default=False, help='Use avro encoding.')
+@click.option('--encoding', default='json', help='Use json encoding.')
 @click.option('--broker', default=None, help='Kafka broker.')
 @click.option('--verbose', default=True, help='Kafka broker.')
-def incident(count, avro, broker, verbose):
+def incident(count, encoding, broker, verbose):
     # Create random incidents
     incident_list = random_incidents(count)
 
-    # If avro encoding was chosen, it does it
-    if not avro and verbose:
-        incident_json = json.dumps(incident_list, indent=2, sort_keys=True, default=str)
-        print(incident_json)
+    if encoding == 'json':
+        for incident_item in incident_list:
+            incident_json = json.dumps(incident_item, sort_keys=True, default=str)
+            if verbose:
+                print(incident_json)
+    elif encoding == 'avro':
+        from fastavro.schema import load_schema
+        from fastavro import writer
 
-    # If avro encoding was chosen.
-    if avro:
-       pass
+        schema = load_schema('incident.avsc')
+        with open('incident.avro', 'wb') as out:
+            writer(out, schema, incident_list, codec='snappy')
 
-       # If a kafka broker is defined, it is sent there.
-       if broker:
-           pass
+
+def serialize_ts(dt):
+    epoch = datetime.datetime.utcfromtimestamp(0)
+    return long((dt - epoch).total_seconds() * 1000.)
 
 
 def random_incidents(count):
@@ -312,74 +155,48 @@ def random_incidents(count):
 	# Fake response zone with the zipcode.
 	response_zone = sample[1]
 	state = sample[4]
-
-	address_dict = dict(
-	address_line1=fake.address().split('\n')[0],
-	latitude=sample[9] + random.uniform(-0.01, 0.01),
-	longitude=sample[10] + random.uniform(-0.01, 0.01),
-	state=state,
-	postal_code=sample[1],
-	)
-
-	incident_date = fake.date_time_between(start_date="-15y", end_date="-5y", tzinfo=None)
+        incident_date = fake.date_time_between(start_date="-15y", end_date="-5y", tzinfo=None)
 	dispatched_delta = random.randint(5, 10)
 	enroute_delta = random.randint(5, 60)
 	arrived_delta = random.randint(120, 1200)
 	available_delta = random.randint(60, 5000)
+	station = stations[response_zone]
+	unit = random.choice(station['units'])
+	incident_type = random.choice(INCIDENT_TYPES.keys())
+	subincident_type = random.choice(INCIDENT_TYPES[incident_type])
 
 	dispatched_date = incident_date + datetime.timedelta(seconds=dispatched_delta)
 	enroute_date = dispatched_date + datetime.timedelta(seconds=enroute_delta)
 	arrived_date = enroute_date + datetime.timedelta(seconds=arrived_delta)
 	available_date = arrived_date + datetime.timedelta(seconds=available_delta)
 
-	unit_status_dict = dict(
-	dispatched=dispatched_date,
-	enroute=enroute_date,
-	arrived=arrived_date,
-	available=available_date,
+	incident_dict = dict(
+	apparatus_car_id=str(unit['car_id']),
+	apparatus_shift=unit['shift'],
+	apparatus_unit_type=unit['unit_type'],
+        apparatus_dispatched=serialize_ts(dispatched_date),
+        apparatus_enroute=serialize_ts(enroute_date),
+        apparatus_arrived=serialize_ts(arrived_date),
+        apparatus_available=serialize_ts(available_date),
+	address_line1=fake.address().split('\n')[0],
+	address_latitude=sample[9] + random.uniform(-0.01, 0.01),
+	address_longitude=sample[10] + random.uniform(-0.01, 0.01),
+	address_state=state,
+	address_postal_code=sample[1],
+	description_comments=fake.text(),
+	description_event_opened=serialize_ts(incident_date),
+	description_event_closed=serialize_ts(available_date),
+	description_first_unit_dispatched=serialize_ts(dispatched_date),
+	description_first_unit_arrived=serialize_ts(arrived_date),
+	description_first_unit_enroute=serialize_ts(enroute_date),
+	description_type=incident_type,
+	description_subtype=subincident_type,
+	fire_dpt_name=station['name'],
+	fire_dpt_shift=unit['shift'],
+	fire_dpt_lat=station['lat'],
+	fire_dpt_lon=station['lon'],
+	fire_dpt_state=station['state'],
 	)
-
-	station = stations[response_zone]
-
-	unit = random.choice(station['units'])
-
-	apparatus_dict = dict(
-	car_id=unit['car_id'],
-	shift=unit['shift'],
-	unit_type=unit['unit_type'],
-	unit_status=unit_status_dict,
-	)
-
-	incident_type = random.choice(INCIDENT_TYPES.keys())
-	subincident_type = random.choice(INCIDENT_TYPES[incident_type])
-
-	description_dict = dict(
-	comments=fake.text(),
-	event_opened=incident_date,
-	event_closed=available_date,
-	first_unit_dispatched=dispatched_date,
-	first_unit_arrived=arrived_date,
-	first_unit_enroute=enroute_date,
-	type=incident_type,
-	subtype=subincident_type,
-	)
-
-	station_dict = dict(
-	name=station['name'],
-	shift=unit['shift'],
-	lat=station['lat'],
-	lon=station['lon'],
-	state=station['state'],
-	)
-
-	incident_dict = {
-	"address": address_dict,
-	"apparatus": apparatus_dict,
-	"description": description_dict,
-	# Station is synonym with fire department in this dataset.
-	"fire_department": station_dict,
-	"version": "1.0.29",
-	}
 
         incident_list.append(incident_dict)
 
