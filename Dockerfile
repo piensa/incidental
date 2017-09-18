@@ -6,9 +6,9 @@ RUN \
     apt-get install -y python-pip python-pandas && \
     rm -rf /var/lib/apt/lists/*
 
-# Install Faker
+# Install Faker, Click, Fastavro
 # FIXME: Use of pip and requirements.txt was abandandoned due to a weird crypto error.
-RUN easy_install Faker
+RUN easy_install Faker click fastavro
 
 # Set the working directory to /app
 WORKDIR /app
