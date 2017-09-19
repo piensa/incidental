@@ -1,1 +1,1 @@
-python incidents.py --count 200 | /bin/kafka-console-producer.sh --broker-list 10.0.2.186:1025,10.0.2.190:1025,10.0.1.47:1025 --topic fire
+python incidents.py --count 1000 | /bin/kafka-console-producer.sh --broker-list 10.0.1.155:1025,10.0.2.52:1025,10.0.2.212:1025 --topic fire

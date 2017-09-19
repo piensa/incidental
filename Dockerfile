@@ -21,5 +21,5 @@ ENV KAFKA_BROKER_LIST 127.0.0.1:1025
 ENV KAFKA_TOPIC_NAME topic1
 ENV INCIDENT_COUNT 1
 
-CMD ["watch", "-n1", "./loadit.sh"]
+CMD ["watch", "-n30", "./loadit.sh"]
 
