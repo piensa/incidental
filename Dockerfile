@@ -8,7 +8,7 @@ RUN \
 
 # Install Faker, Click, fastavro
 # FIXME: Use of pip and requirements.txt was abandandoned due to a weird crypto error.
-RUN easy_install Faker click fastavro python-kafka
+RUN easy_install Faker click fastavro
 
 # Set the working directory to /app
 WORKDIR /app
