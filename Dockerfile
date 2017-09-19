@@ -21,6 +21,5 @@ ENV KAFKA_BROKER_LIST 127.0.0.1:1025
 ENV KAFKA_TOPIC_NAME topic1
 ENV INCIDENT_COUNT 1
 
-# Run app.py when the container launches
-CMD ["python", "incidents.py", "--count", "$INCIDENT_COUNT"]
+CMD ["watch", "-n1", "./loadit.sh"]
 
