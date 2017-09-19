@@ -3,7 +3,7 @@ FROM mesosphere/kafka-client
 # Install pandas
 RUN \
     apt-get update && \
-    apt-get install -y python-avro python-pandas python-snappy && \
+    apt-get install -y python-dev python-pip python-avro python-pandas python-snappy && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Faker, Click, fastavro
